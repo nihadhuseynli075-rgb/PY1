@@ -1,6 +1,10 @@
 import pandas as pd
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 TOKEN = "7708346934:AAHwtezftXup2vEczuRfabH-GMYPOM90v2w"
 
