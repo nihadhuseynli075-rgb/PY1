@@ -151,8 +151,10 @@ def provider_filter(choice):
 
     return df[df[COL_PROVIDER].str.lower()==c]
 
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    user_id = update.effective_user.id
+    logger.info(f"user {user_id} started")
 
     context.user_data.clear()
     context.user_data["state"]=STATE_LANG
