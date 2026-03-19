@@ -16,7 +16,8 @@ COL_REG = "Regestration links"
 COL_MAIN = "Main page links"
 
 df = pd.read_csv(CSV_FILE)
-df = df.applymap(lambda x: str(x).strip())
+for col in df.columns:
+    df[col] = df[col].astype(str).str.strip()
 
 
 def kb(rows):
