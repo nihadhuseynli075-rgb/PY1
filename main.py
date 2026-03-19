@@ -2,7 +2,11 @@ import pandas as pd
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 import logging
+import json
+import os
 
+STATS_FILE = "stats.json"
+ADMIN_ID = 123456789  # ← ВСТАВЬ СВОЙ TELEGRAM ID
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -86,7 +90,22 @@ STATE_TEST = 4
 STATE_BRANCH = 5
 STATE_SECTOR = 6
 
+def load_stats():
+    if not os.path.exists(STATS_FILE):
+        return {"users": []}
+    with open(STATS_FILE, "r") as f:
+        return json.load(f)
 
+def save_stats(stats):
+    with open(STATS_FILE, "w") as f:
+        json.dump(stats, f)
+
+def track_user(user_id):
+    stats = load_stats()
+    if user_id not in stats["users"]:
+        stats["users"].append(user_id)
+    save_stats(stats)
+    
 def text(context,key):
     lang = context.user_data.get("lang","English")
     return TEXT[lang][key]
@@ -160,6 +179,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     logger.info(f"user {user_id} started")
 
+    track_user(user_id)  # ← ВОТ ЭТО ДОБАВИЛИ
+
     context.user_data.clear()
     context.user_data["state"]=STATE_LANG
 
@@ -167,7 +188,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Choose language",
         reply_markup=LANG_KB
     )
-
 
 async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -285,6 +305,16 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data.clear()
 
         return
+        
+async def stats_command(update, context):
+    if update.effective_user.id != 7755680287:
+        await update.message.reply_text("No access")
+        return
+
+    stats = load_stats()
+    total = len(stats["users"])
+
+    await update.message.reply_text(f"Unique users: {total}")
 
 
 async def send_results(update,context,data):
@@ -336,6 +366,7 @@ def main():
     app=ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start",start))
+    app.add_handler(CommandHandler("stats", stats_command))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND,handle))
 
     print("Bot running...")
